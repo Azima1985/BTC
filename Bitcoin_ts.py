@@ -62,17 +62,6 @@ bitcoin['3m_change']=(bitcoin['btc_price']-bitcoin['btc_price'].shift(90))
 bitcoin['6m_change']=(bitcoin['btc_price']-bitcoin['btc_price'].shift(180))
 bitcoin['1y_change']=(bitcoin['btc_price']-bitcoin['btc_price'].shift(365))
 
-ethereum=crypto.loc[crypto['coin']=='ethereum']
-ethereum.columns=['eth_mcap','eth_price','eth_volume','time','eth']
-ethereum['date']=ethereum['time'].apply(convert_to_time)
-ethereum.set_index(ethereum['date'],inplace=True)
-litecoin=crypto.loc[crypto['coin']=='litecoin']
-litecoin.columns=['ltc_mcap','ltc_price','ltc_volume','time','ltc']
-litecoin['date']=litecoin['time'].apply(convert_to_time)
-litecoin.set_index(litecoin['date'],inplace=True)
-#crypto=pd.concat([bitcoin,ethereum,litecoin],axis=1)
-
-
 bitcoin['gain'] = bitcoin.loc[bitcoin['1d_change']>0]['1d_change']
 bitcoin['loss'] = abs(bitcoin.loc[bitcoin['1d_change']<0]['1d_change'])
 bitcoin['gain']=bitcoin['gain'].fillna(0)
@@ -81,15 +70,13 @@ bitcoin['loss'] =bitcoin['loss'].fillna(0)
 bitcoin['log_price']=np.log(bitcoin['btc_price'])
 bitcoin.set_index(bitcoin['date'],inplace=True)
 bitcoin = bitcoin[~bitcoin.index.duplicated(keep='first')]
-#bitcoin.loc[max(bitcoin.index)+pd.DateOffset(1),:]=None
 ts=np.log(bitcoin['btc_price'])
-print('p-value of augmented Dickey-Fuller test for price: ',adfuller(bitcoin['btc_price'])[1])
 
+print('p-value of augmented Dickey-Fuller test for price: ',adfuller(bitcoin['btc_price'])[1])
 print('p-value of augmented Dickey-Fuller test for natural logarithm of price: ',adfuller(ts)[1])
 print('p-value of augmented Dickey-Fuller test for natural logarithm after differencing level 1: ',adfuller((ts-ts.shift()).dropna())[1])
 #ADFuller test shows the log of the price after 1 level differencing is stationary
-'''Therefore, the ARIMA model will be fitted to the log of the price 
-with d=1 & compared to logdiff'''
+#Therefore, the ARIMA model will be fitted to the log of the price with d=1 & compared to logdiff
 
 train=bitcoin.loc['2013-10-26':'2018-05-01']
 test=bitcoin.loc['2018-05-02':]
@@ -97,10 +84,9 @@ test=bitcoin.loc['2018-05-02':]
 
 logdiff=ts-ts.shift().dropna()
 
-'''plot autocorrelation and partial autocorrelation of the time series 
-to be used as a reference for the ARIMA model'''
+#plot autocorrelation and partial autocorrelation of the time series to be used as a reference for the ARIMA model
 
-'''statsmodels.graphics.tsaplots.plot_acf(logdiff.dropna())
+statsmodels.graphics.tsaplots.plot_acf(logdiff.dropna())
 plt.title('Autocorrelation')
 plt.xlabel('Lag')
 plt.ylabel('acf')
@@ -108,15 +94,14 @@ plt.ylabel('acf')
 statsmodels.graphics.tsaplots.plot_pacf(logdiff.dropna())
 plt.title('Partial autocorrelation')
 plt.xlabel('Lag')
-plt.ylabel('pacf')'''
+plt.ylabel('pacf')
 
 #another way to plot autocorrelation in time series directly with pandas:
 plt.figure()
 autocorrelation_plot(logdiff.dropna())
 
-'''ACF and PACF plots show a single positive spike at lag 1, 
-therefore a model with q=0 will be used. p parameter is adjusted by
-finding good compromise between error and computation time to be 10'''
+#ACF and PACF plots show a single positive spike at lag 1, therefore a model with q=0 will be used. p parameter is adjusted by 
+#finding good compromise between error and computation time to be 10
 
 model = ARIMA(ts,order=(2,1,0))
 fit = model.fit(disp=0)
@@ -175,16 +160,3 @@ plt.title('Expected Vs Predicted Views Forecasting')
 plt.xlabel('Day')
 plt.ylabel('Closing Price')
 plt.legend(labels)
-
-
-
-'''log_predictions=[]
-predictions=[]
-output=fit.forecast(steps=len(test['log_price']))
-for i in range(len(test['log_price']+1)):
-    log_predictions.append(output[0][i])
-    predictions.append(np.exp(log_predictions[i]))'''
-
-'''TRY TO ADD EACH FORECAST TO THE HISTORY LIST AND BASE THE NEXT FORECAST 
-ON THE PREVIOUS ONE INSTEAD OF DOING ALL FORECASTS AT ONCE'''
-    
