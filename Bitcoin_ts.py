@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Aug  5 13:34:01 2018
-
-@author: Mohamed Hammad
-"""
-
 import matplotlib.pyplot as plt
 from sklearn.utils import resample
 from sklearn import linear_model
